@@ -1,28 +1,27 @@
 #!/usr/bin/python3
 
 import asyncio, signal
-from  blink  import blink
-from  ipc import coordinator_receiver
-
-loop = asyncio.get_event_loop()
+from ipc import blinkenlights_client
 
 def my_interrupt_handler():
     print('Stopping')
     for task in asyncio.Task.all_tasks():
         task.cancel()
-    loop.stop()
+    loop.stop() #only necessary when we run run_forever
+
+
+loop = asyncio.get_event_loop()
 
 loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
 
-blink.start()
-coordinator_receiver.start(loop)
+blinkenlights_client.start()
 
 try:
     loop.run_forever()
 except KeyboardInterrupt:
     pass
 except asyncio.CancelledError:
+    ipc_send.stop()
     print('Tasks has been canceled')
 finally:
-    coordinator_receiver.stop()
     loop.close()
