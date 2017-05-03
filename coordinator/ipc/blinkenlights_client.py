@@ -8,10 +8,9 @@ def connect():
     print('Connecting to blinkenlights')
     while True:
         try:
-            blinkenlight_client = yield from loop.create_connection(
+            blinkenlight_client = yield from loop.create_unix_connection(
                 EchoClientProtocol,
-                '127.0.0.1',
-                8888)
+                '/tmp/coord.socket')
         except OSError as e:
             print('Connection to blinkenlights failed, retrying in 5 seconds')
             yield from asyncio.sleep(5)

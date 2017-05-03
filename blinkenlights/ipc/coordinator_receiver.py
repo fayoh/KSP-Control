@@ -23,9 +23,8 @@ class EchoServerClientProtocol(asyncio.Protocol):
 
 def start(loop):
     global coordinator_server
-    coro = loop.create_server(EchoServerClientProtocol,
-                              '127.0.0.1',
-                              8888)
+    coro = loop.create_unix_server(EchoServerClientProtocol,
+                              '/tmp/coord.socket')
     coordinator_server = loop.run_until_complete(coro)
 
 def stop():
