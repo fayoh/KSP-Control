@@ -13,6 +13,7 @@ def my_interrupt_handler():
 loop = asyncio.get_event_loop()
 
 loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
+loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
 
 ipc.blinkenlights.start()
 

@@ -13,6 +13,7 @@ def my_interrupt_handler():
     loop.stop()
 
 loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
+loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
 
 blink.start()
 ipc.coordinator.start(loop)
