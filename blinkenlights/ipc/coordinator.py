@@ -1,5 +1,6 @@
 import asyncio
 
+
 class EchoServerClientProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         peername = transport.get_extra_info('peername')
@@ -20,13 +21,13 @@ class EchoServerClientProtocol(asyncio.Protocol):
         print('The client closed the connection')
 
 
-
 def start(loop):
     global coordinator_server
     coro = loop.create_unix_server(EchoServerClientProtocol,
-                              '/tmp/coord.socket')
+                                   '/tmp/coord.socket')
     coordinator_server = loop.run_until_complete(coro)
 
+
 def stop():
-    pass #TODO: We must be able to dig out server somewhere?
+    pass  # TODO: We must be able to dig out server somewhere?
     coordinator_server.close()

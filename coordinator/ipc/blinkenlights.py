@@ -18,6 +18,7 @@ def connect():
             print('Connection to blinkenlights established')
             break
 
+
 class EchoClientProtocol(asyncio.Protocol):
     def __init__(self):
         self.message = "message"
@@ -38,14 +39,10 @@ class EchoClientProtocol(asyncio.Protocol):
         loop.call_later(5, self.connect)
 
 
-
 def start():
     print('IPC client towards Blinkenlight starting')
-    task = asyncio.async(connect())
-    global blinkenlight_client
-    def cb(result):
-        blinkenlight_client = result
-    task.add_done_callback(cb)
+    asyncio.async(connect())
+
 
 def stop():
     pass
