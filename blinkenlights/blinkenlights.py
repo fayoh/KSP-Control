@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
-import asyncio, signal
+import asyncio, signal, os
 from  blink  import blink
-from  ipc import coordinator_receiver
+import  ipc.coordinator
 
 loop = asyncio.get_event_loop()
 
@@ -15,7 +15,7 @@ def my_interrupt_handler():
 loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
 
 blink.start()
-coordinator_receiver.start(loop)
+ipc.coordinator.start(loop)
 
 try:
     loop.run_forever()
@@ -24,5 +24,5 @@ except KeyboardInterrupt:
 except asyncio.CancelledError:
     print('Tasks has been canceled')
 finally:
-    coordinator_receiver.stop()
+    ipc.coordinator.stop()
     loop.close()
