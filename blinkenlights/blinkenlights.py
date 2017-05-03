@@ -25,4 +25,5 @@ except asyncio.CancelledError:
     print('Tasks has been canceled')
 finally:
     ipc.coordinator.stop()
+    os.remove('/tmp/coord.socket')
     loop.close()
