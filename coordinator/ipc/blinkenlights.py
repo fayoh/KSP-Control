@@ -1,6 +1,15 @@
 import asyncio
 import time
 import pickle
+import sys
+import os
+
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../' ))
+from common.devices import LED
+from common.devices import LED_STATES
+from common.devices import LED_DICT
+from common.devices import LED_STATES_DICT
 
 @asyncio.coroutine
 def connect():
@@ -23,10 +32,13 @@ def connect():
 
 class EchoClientProtocol(asyncio.Protocol):
     def __init__(self):
-        self.message = [{'kaka':1, 'banan':2}, {'kaka':1, 'banan':2}]
+        self.message = []
+        for i in range(100):
+            self.message.append((LED_DICT[LED(i%43+1)],
+                                 LED_STATES_DICT[LED_STATES(i%4+1)], False))
 
     def connection_made(self, transport):
-        self.msgs_left=9999
+        self.msgs_left=9
         self.start_time=time.perf_counter()
         self.transport = transport
         self.transport.write(pickle.dumps(self.message))

@@ -1,12 +1,31 @@
 import asyncio
 import pickle
+import time
+import concurrent.futures
+import functools
+import threading
 
-class EchoServerClientProtocol(asyncio.Protocol):
+lock = threading.Lock()
+
+def blocking(num):
+    with (lock):
+        time.sleep(1)
+        print('banan', num)
+
+
+# Create a limited thread pool.
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=3,)
+
+
+class  EchoServerClientProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         peername = transport.get_extra_info('peername')
         print('Connection from {}'.format(peername))
         self.transport = transport
+        self.counter = 0
     def data_received(self, data):
+        asyncio.get_event_loop().run_in_executor(executor, functools.partial(blocking, self.counter))
+        self.counter +=1
         try:
             message = pickle.loads(data)
             data2 = pickle.dumps(message)
