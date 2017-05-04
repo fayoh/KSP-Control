@@ -4,6 +4,7 @@ import asyncio
 import signal
 import sys
 import os
+import ipc.commander
 import ipc.blinkenlights
 
 
@@ -24,7 +25,7 @@ loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
 loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
 
 ipc.blinkenlights.start()
-
+ipc.commander.start()
 try:
     loop.run_forever()
 except KeyboardInterrupt:
