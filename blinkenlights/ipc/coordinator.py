@@ -1,21 +1,18 @@
 import asyncio
-
+import pickle
 
 class EchoServerClientProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         peername = transport.get_extra_info('peername')
         print('Connection from {}'.format(peername))
         self.transport = transport
-
     def data_received(self, data):
         try:
-            message = data.decode()
-        except Exception:
-            print('Ignoring malformed data')
-        else:
-            print('Data received: {!r}'.format(message))
-            print('Send: {!r}'.format(message))
-            self.transport.write(data)
+            message = pickle.loads(data)
+            data2 = pickle.dumps(message)
+            self.transport.write(data2)
+        except pickle.PickleError as e:
+            print('Ignoring malformed data', data, e.strerror)
 
     def connection_lost(self, exc):
         print('The client closed the connection')
