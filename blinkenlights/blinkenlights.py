@@ -3,9 +3,12 @@
 import asyncio
 import signal
 import os
+import sys
 from blink import blink
 import ipc.coordinator
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '..' ))
+import common.devices
 
 loop = asyncio.get_event_loop()
 

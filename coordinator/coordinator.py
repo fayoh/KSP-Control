@@ -2,7 +2,13 @@
 
 import asyncio
 import signal
+import sys
+import os
 import ipc.blinkenlights
+
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..' ))
+import common.devices
 
 
 def my_interrupt_handler():
