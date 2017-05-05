@@ -46,4 +46,5 @@ def start(loop):
 
 def stop():
     pass  # TODO: We must be able to dig out server somewhere?
+    executor.shutdown(wait=False)
     coordinator_server.close()
