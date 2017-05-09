@@ -4,14 +4,34 @@ import asyncio
 import signal
 import os
 import sys
-from blink import blink
-import ipc.coordinator
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..' ))
+import ipc.blinkenlightsserver
+import blink.blinkgenerator
+import blinkenio.controller
 import common.devices
 
-loop = asyncio.get_event_loop()
 
+class Blinkenlights:
+    def __init__(self):
+        self.blinkenlightsserver = ipc.blinkenlightsserver.BlinkenlightsServer(
+            '/tmp/blinkenlights.socket', self)
+        self.blinkgenerator = blink.blinkgenerator.BlinkGenerator()
+        self.iocontroller = blinkenio.controller.Controller()
+
+    def start(self):
+        self.blinkenlightsserver.start()
+        self.blinkgenerator.start()
+        self.iocontroller.start()
+
+    def stop(self):
+        self.blinkenlightsserver.stop()
+        self.blinkgenerator.stop()
+        self.iocontroller.stop()
+
+    def handle_data_from_coordinator(self, message):
+        pass
+
+    def send_data_to_coordinator(self, message):
+        pass
 
 def my_interrupt_handler():
     print('Stopping')
@@ -20,19 +40,18 @@ def my_interrupt_handler():
     loop.stop()
 
 
-loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
-loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
+    loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
 
-blink.start()
-ipc.coordinator.start(loop)
+    blinkenlights = Blinkenlights()
+    blinkenlights.start()
 
-try:
-    loop.run_forever()
-except KeyboardInterrupt:
-    pass
-except asyncio.CancelledError:
-    print('Tasks has been canceled')
-finally:
-    ipc.coordinator.stop()
-    os.remove('/tmp/coord.socket')
-    loop.close()
+    try:
+        loop.run_forever()
+    except asyncio.CancelledError:
+        print('Tasks has been canceled')
+    finally:
+        blinkenlights.stop()
+        loop.close()

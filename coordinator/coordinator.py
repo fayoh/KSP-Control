@@ -4,11 +4,8 @@ import asyncio
 import signal
 import sys
 import os
-import ipc.commander
-import ipc.blinkenlights
-
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..' ))
+import ipc.commanderclient
+import ipc.blinkenlightsclient
 import common.devices
 
 
@@ -19,19 +16,41 @@ def my_interrupt_handler():
     loop.stop()  # only necessary when we run run_forever
 
 
-loop = asyncio.get_event_loop()
+class Coordinator:
+    def __init__(self):
+        commandersocket = '/tmp/commander.socket'
+        blinkenlightssocket = '/tmp/blinkenlights.socket'
+        self.blinkenlightsclient = ipc.blinkenlightsclient.BlinkenlightsClient(
+            blinkenlightssocket, self)
+        self.commanderclient = ipc.commanderclient.CommanderClient(
+            commandersocket, self)
 
-loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
-loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
+    def start(self):
+        self.blinkenlightsclient.start()
+        self.commanderclient.start()
 
-ipc.blinkenlights.start()
-ipc.commander.start()
-try:
-    loop.run_forever()
-except KeyboardInterrupt:
-    pass
-except asyncio.CancelledError:
-    ipc.blinkenlights.stop()
-    print('Tasks has been canceled')
-finally:
-    loop.close()
+    def stop(self):
+        self.blinkenlightsclient.stop()
+        self.commanderclient.stop()
+
+    def handle_data_from_blinkenlights(self, message):
+        pass
+
+    def handle_data_from_commander(self, message):
+        pass
+
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
+    loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
+
+    coordinator = Coordinator()
+    coordinator.start()
+
+    try:
+        loop.run_forever()
+    except asyncio.CancelledError:
+        print('Tasks has been canceled')
+    finally:
+        coordinator.stop()
+        loop.close()

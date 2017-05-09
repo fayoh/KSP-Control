@@ -26,7 +26,6 @@ class KSPConnection:
     @asyncio.coroutine
     def do_start(self, future):
         while True:
-            yield from asyncio.sleep(5)
             try:
                 self.conn = krpc.connect(
                     name=self.name,
@@ -35,13 +34,14 @@ class KSPConnection:
                     stream_port=self.stream_port)
             except:
                 print("Failed to connect to KSP, trying again in 5 seconds.")
+                yield from asyncio.sleep(5)
             else:
                 print("Connected to KSP.")
                 self.kspconn_starting = None
                 break
 
     def kspconn_done(self, future):
-        print("connection to ksp done")
+        print("Connection to ksp established")
 
     def handle_data_from_coordinator(self, message):
         pass
