@@ -3,29 +3,50 @@ import asyncio
 import signal
 import sys
 import os
-import ipc.coordinator
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..' ))
-import common.devices
+import ipc.commanderserver
+import ipc.kspconn
 
 
 def my_interrupt_handler():
     print('Stopping')
     for task in asyncio.Task.all_tasks():
         task.cancel()
-    loop.stop()  # only necessary when we run run_forever
+    loop.stop()
+
+class Commander:
+    def __init__(self):
+        self.commanderserver = ipc.commanderserver.CommanderServer(
+        '/tmp/commander.socket',
+            self)
+        self.kspconnection = ipc.kspconn.KSPConnection(commander=self)
+
+    def start(self):
+        self.commanderserver.start()
+        self.kspconnection.start()
+
+    def stop(self):
+        self.commanderserver.stop()
+        self.kspconnection.stop()
+
+    def handle_data_from_coordinator(self, message):
+        self.kspconnection.handle_data_from_coordinator(message)
+
+    def send_data_to_coordinator(self, message):
+        self.commanderserver.send_data_to_coordinator(message)
 
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    ipc.coordinator.start()
-#    kspconn.start()
+    loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
+    loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
+
+    commander = Commander()
+    commander.start()
+
     try:
         loop.run_forever()
-    except KeyboardInterrupt:
-        pass
     except asyncio.CancelledError:
-        ipc.coordinator.stop()
         print('Tasks has been canceled')
     finally:
+        commander.stop()
         loop.close()
