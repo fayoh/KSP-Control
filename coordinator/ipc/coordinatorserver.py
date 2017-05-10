@@ -3,6 +3,7 @@ import pickle
 import functools
 import os
 import concurrent.futures
+import logging
 import common.protocol as protocol
 from common.protocol import MessageType
 from common.protocol import Status
@@ -13,6 +14,7 @@ class CoordinatorServer:
             self.coordinator_server = coordinator_server
             self.transport = None
             self.client = None
+            self.logger = logging.getLogger(__name__)
 
         def connection_made(self, transport):
             self.transport = transport
@@ -23,7 +25,7 @@ class CoordinatorServer:
                 if not protocol.is_correct_message(message):
                     raise Exception()
             except pickle.PickleError as e:
-                print('Ignoring malformed data', data, e)
+                self.logger.warn('Ignoring malformed data', data, e)
             else:
                 msgtype = protocol.get_message_type(message)
 
@@ -33,8 +35,7 @@ class CoordinatorServer:
                     coordinator_server.handle_data_from(self.client, message)
 
         def connection_lost(self, exc):
-            print('The client closed the connection')
-            # TODO: remove connection from list
+            self.coordinator_server.remove_connection(self.client)
 
         def send_data(self, message):
             data = pickle.dumps(message)
@@ -44,7 +45,6 @@ class CoordinatorServer:
             msgtype = protocol.get_message_type(message)
             if msgtype == protocol.MessageType.IDENTIFY:
                 msgdata = protocol.get_message_data(message)
-                print(msgdata)
                 if isinstance(msgdata, protocol.Identity):
                     self.client = msgdata
                     self.coordinator_server.add_connection(msgdata, self)
@@ -59,6 +59,7 @@ class CoordinatorServer:
         self.server = self.loop.create_unix_server(
             lambda: self.CoordinatorProtocol(self), self.socketpath)
         self.connections = {}
+        self.logger = logging.getLogger(__name__)
 
     def start(self):
         try:
@@ -67,7 +68,7 @@ class CoordinatorServer:
             pass
         finally:
             self.loop.run_until_complete(self.server)
-            print("Server started")
+            self.logger.info("Server started")
 
     def stop(self):
         self.broadcast(
@@ -77,8 +78,12 @@ class CoordinatorServer:
         os.remove(self.socketpath)
 
     def add_connection(self, name, connection):
-        print("Connection made from ", name)
+        self.logger.info("Connection made from %s", name.name)
         self.connections[name] = connection
+
+    def remove_connection(self, name):
+        self.logger.info("%s disconnected", name.name)
+        del self.connections[name]
 
     def handle_data_from(self, message):
         self.coordinator.handle_data_from_coordinator(message)

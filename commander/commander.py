@@ -4,12 +4,12 @@ import signal
 import sys
 import os
 import configparser
+import logging
 from common.coordinatorclient import CoordinatorClient
 from kspconn.kspconn import KSPConnection
 
 
 def my_interrupt_handler():
-    print('Stopping')
     for task in asyncio.Task.all_tasks():
         task.cancel()
     loop.stop()
@@ -43,6 +43,10 @@ if __name__ == "__main__":
     loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
     loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
 
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.info('Blinkenlights starting')
+
     config = configparser.ConfigParser()
     config.read('common/config.ini')
 
@@ -52,7 +56,8 @@ if __name__ == "__main__":
     try:
         loop.run_forever()
     except asyncio.CancelledError:
-        print('Tasks has been canceled')
+        logger.info('Tasks has been canceled')
     finally:
+        logger.info('Shutting down')
         commander.stop()
         loop.close()

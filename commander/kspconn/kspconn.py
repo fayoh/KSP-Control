@@ -1,5 +1,6 @@
 import krpc
 import asyncio
+import logging
 import common.protocol as protocol
 
 class KSPConnection:
@@ -11,6 +12,7 @@ class KSPConnection:
         self.stream_port = int(config.get('StreamPort', 50001))
         self.commander = commander
         self.conn = None
+        self.logger = logging.getLogger(__name__)
 
     def start(self):
         asyncio.async(self.do_start())
@@ -25,10 +27,11 @@ class KSPConnection:
                     rpc_port=self.rpc_port,
                     stream_port=self.stream_port)
             except:
-                print("Failed to connect to KSP, trying again in 5 seconds.")
+                self.logger.info(
+                    "Failed to connect to KSP, trying again in 5 seconds.")
                 yield from asyncio.sleep(5)
             else:
-                print("Connected to KSP.")
+                self.logger.info("Connected to KSP.")
                 self.commander.send_data_to_coordinator(
                     (protocol.MessageType.STATUS_MSG, protocol.Status.OK))
                 break
