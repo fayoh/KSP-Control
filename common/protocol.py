@@ -1,6 +1,7 @@
-import common.autonumber
+from common.autonumber import AutoNumber
+from common.autonumber import Enumerator
 
-enumeration_enumerator = autonumber.Enumerator()
+enumeration_enumerator = Enumerator()
 
 # Message structure
 # (MessageType.LED_MSG, [(LED, state=LEDStates, blink=True|False)])
@@ -59,10 +60,10 @@ class KrpcInfo(AutoNumber):
 enumeration_enumerator.reset()
 KRPCINFO_DICT = {v: enumeration_enumerator.next()
                    for v in KrpcInfo.__members__.values()}
-KRPC_INFO_REVERSE_DICT = {v:k  for k,v in KRPC_INFO_DICT.items()}
+KRPCINFO_REVERSE_DICT = {v:k  for k,v in KRPCINFO_DICT.items()}
 
 
-class DeplymentStatus(AutoNumber):
+class DeploymentStatus(AutoNumber):
     RETRACTED = ()
     EXTENDED = ()
     MOVING = ()
