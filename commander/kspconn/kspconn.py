@@ -1,6 +1,6 @@
 import krpc
 import asyncio
-
+import common.protocol as protocol
 
 class KSPConnection:
     def __init__(self,
@@ -14,17 +14,13 @@ class KSPConnection:
         self.rpc_port = rpc_port
         self.stream_port = stream_port
         self.commander = commander
-        self.ksp_conn_starting = None
         self.conn = None
 
     def start(self):
-        future = asyncio.Future()
-        self.kspconn_starting = asyncio.async(
-            self.do_start(future))
-        future.add_done_callback(self.kspconn_done)
+        asyncio.async(self.do_start())
 
     @asyncio.coroutine
-    def do_start(self, future):
+    def do_start(self):
         while True:
             try:
                 self.conn = krpc.connect(
@@ -37,17 +33,13 @@ class KSPConnection:
                 yield from asyncio.sleep(5)
             else:
                 print("Connected to KSP.")
-                self.kspconn_starting = None
+                self.commander.send_data_to_coordinator(
+                    (protocol.MessageType.STATUS_MSG, protocol.Status.OK))
                 break
-
-    def kspconn_done(self, future):
-        print("Connection to ksp established")
 
     def handle_data_from_coordinator(self, message):
         pass
 
     def stop(self):
-        if self.kspconn_starting != None:
-            self.kspconn_starting.cancel()
         if self.conn != None:
             self.conn.close()

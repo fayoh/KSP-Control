@@ -4,7 +4,7 @@ import signal
 import sys
 import os
 import ipc.commanderserver
-import ipc.kspconn
+import kspconn.kspconn
 
 
 def my_interrupt_handler():
@@ -17,7 +17,7 @@ class Commander:
     def __init__(self):
         self.commanderserver = ipc.commanderserver.CommanderServer(
         '/tmp/commander.socket', self)
-        self.kspconnection = ipc.kspconn.KSPConnection(commander=self)
+        self.kspconnection = kspconn.kspconn.KSPConnection(commander=self)
 
     def start(self):
         self.commanderserver.start()
