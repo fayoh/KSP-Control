@@ -4,26 +4,29 @@ import asyncio
 import signal
 import os
 import sys
-import ipc.blinkenlightsserver
 import blink.blinkgenerator
 import blinkenio.controller
 import common.devices
-
+from common.coordinatorclient import CoordinatorClient
 
 class Blinkenlights:
     def __init__(self):
-        self.blinkenlightsserver = ipc.blinkenlightsserver.BlinkenlightsServer(
-            '/tmp/blinkenlights.socket', self)
+        # TODO: Implement base class Service, setting type and event
+        self.type = 'blinkenlights'
+        self.connectionevent = asyncio.Event()
+        # TODO: Implement config parser
+        self.coordinatorclient = CoordinatorClient(
+            '/tmp/coordinator.socket', self)
         self.blinkgenerator = blink.blinkgenerator.BlinkGenerator()
         self.iocontroller = blinkenio.controller.Controller()
 
     def start(self):
-        self.blinkenlightsserver.start()
+        self.coordinatorclient.start()
         self.blinkgenerator.start()
         self.iocontroller.start()
 
     def stop(self):
-        self.blinkenlightsserver.stop()
+        self.coordinatorclient.stop()
         self.blinkgenerator.stop()
         self.iocontroller.stop()
 

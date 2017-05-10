@@ -3,8 +3,8 @@ import asyncio
 import signal
 import sys
 import os
-import ipc.commanderserver
-import kspconn.kspconn
+from common.coordinatorclient import CoordinatorClient
+from kspconn.kspconn import KSPConnection
 
 
 def my_interrupt_handler():
@@ -15,23 +15,26 @@ def my_interrupt_handler():
 
 class Commander:
     def __init__(self):
-        self.commanderserver = ipc.commanderserver.CommanderServer(
-        '/tmp/commander.socket', self)
-        self.kspconnection = kspconn.kspconn.KSPConnection(commander=self)
+        self.type = 'commander'
+        self.connectionevent = asyncio.Event()
+        # TODO: Implement config parser
+        self.coordinatorclient = CoordinatorClient(
+            '/tmp/coordinator.socket', self)
+        self.kspconnection = KSPConnection(commander=self)
 
     def start(self):
-        self.commanderserver.start()
+        self.coordinatorclient.start()
         self.kspconnection.start()
 
     def stop(self):
-        self.commanderserver.stop()
+        self.coordinatorclient.stop()
         self.kspconnection.stop()
 
     def handle_data_from_coordinator(self, message):
         self.kspconnection.handle_data_from_coordinator(message)
 
     def send_data_to_coordinator(self, message):
-        self.commanderserver.send_data_to_coordinator(message)
+        self.coordinatorclient.send_data_to_coordinator(message)
 
 
 if __name__ == "__main__":

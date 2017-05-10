@@ -4,8 +4,7 @@ import asyncio
 import signal
 import sys
 import os
-import ipc.commanderclient
-import ipc.blinkenlightsclient
+import ipc.coordinatorserver
 import common.devices
 
 
@@ -18,20 +17,16 @@ def my_interrupt_handler():
 
 class Coordinator:
     def __init__(self):
-        commandersocket = '/tmp/commander.socket'
-        blinkenlightssocket = '/tmp/blinkenlights.socket'
-        self.blinkenlightsclient = ipc.blinkenlightsclient.BlinkenlightsClient(
-            blinkenlightssocket, self)
-        self.commanderclient = ipc.commanderclient.CommanderClient(
-            commandersocket, self)
+        # TODO: implement config parser
+        socketpath = '/tmp/coordinator.socket'
+        self.coordinatorserver = ipc.coordinatorserver.CoordinatorServer(
+            socketpath, self)
 
     def start(self):
-        self.blinkenlightsclient.start()
-        self.commanderclient.start()
+        self.coordinatorserver.start()
 
     def stop(self):
-        self.blinkenlightsclient.stop()
-        self.commanderclient.stop()
+        self.coordinatorserver.stop()
 
     def handle_data_from_blinkenlights(self, message):
         pass

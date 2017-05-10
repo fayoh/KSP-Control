@@ -10,12 +10,14 @@ enumeration_enumerator = Enumerator()
 # (MessageType.STATUS_MSG, Status)
 # (MessageType.KRPC_INFO_MSG [(KrpcInfo, data)])
 
+
 class MessageType(AutoNumber):
     LED_MSG = ()
     BARGRAPH_MSG = ()
     ACTION_MSG = ()
     STATUS_MSG = ()
     KRPC_INFO_MSG = ()
+    IDENTIFY = ()
 
 enumeration_enumerator.reset()
 MSGTYPE_DICT = {v: enumeration_enumerator.next()
@@ -23,10 +25,20 @@ MSGTYPE_DICT = {v: enumeration_enumerator.next()
 MSGTYPE_REVERSE_DICT = {v:k  for k,v in MSGTYPE_DICT.items()}
 
 
+class Identity(AutoNumber):
+    BLINKENLIGHTS = ()
+    COMMANDER = ()
+
+enumeration_enumerator.reset()
+IDENTITY_DICT = {v: enumeration_enumerator.next()
+                   for v in Identity.__members__.values()}
+IDENTITY_REVERSE_DICT = {v:k  for k,v in IDENTITY_DICT.items()}
+
 class Status(AutoNumber):
     OK = ()
     DEGRADED = ()
     CONNECTION_LOST = ()
+    SHUTDOWN = ()
 
 enumeration_enumerator.reset()
 STATUS_DICT = {v: enumeration_enumerator.next()
@@ -109,3 +121,19 @@ enumeration_enumerator.reset()
 ACTION_DICT = {v: enumeration_enumerator.next()
                    for v in Action.__members__.values()}
 ACTION_REVERSE_DICT = {v:k  for k,v in ACTION_DICT.items()}
+
+
+def get_message_data(msg):
+    return msg[1]
+
+def get_message_type(msg):
+    return msg[0]
+
+def create_message(msgtype, data):
+    return (msgtype, data)
+
+def is_correct_message(msg):
+    if isinstance(msg, tuple):
+        return isinstance(msg[0],MessageType)
+    else:
+        return False

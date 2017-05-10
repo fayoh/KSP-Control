@@ -3,6 +3,7 @@ import asyncio
 import common.protocol as protocol
 
 class KSPConnection:
+    # TODO: Implement config parser
     def __init__(self,
                  commander,
                  name="",
