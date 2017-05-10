@@ -4,20 +4,22 @@ import asyncio
 import signal
 import os
 import sys
+import configparser
 import blink.blinkgenerator
 import blinkenio.controller
 import common.devices
 from common.coordinatorclient import CoordinatorClient
 
 class Blinkenlights:
-    def __init__(self):
+    def __init__(self, config):
         # TODO: Implement base class Service, setting type and event
         self.type = 'blinkenlights'
+        self.config = config
         self.connectionevent = asyncio.Event()
-        # TODO: Implement config parser
         self.coordinatorclient = CoordinatorClient(
-            '/tmp/coordinator.socket', self)
-        self.blinkgenerator = blink.blinkgenerator.BlinkGenerator()
+            config['SocketPath'], self)
+        self.blinkgenerator = blink.blinkgenerator.BlinkGenerator(
+            float(config.get('BlinkHz', 2)))
         self.iocontroller = blinkenio.controller.Controller()
 
     def start(self):
@@ -48,7 +50,10 @@ if __name__ == "__main__":
     loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
     loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
 
-    blinkenlights = Blinkenlights()
+    config = configparser.ConfigParser()
+    config.read('common/config.ini')
+
+    blinkenlights = Blinkenlights(config['blinkenlights'])
     blinkenlights.start()
 
     try:

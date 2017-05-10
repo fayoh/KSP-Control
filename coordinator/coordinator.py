@@ -4,6 +4,7 @@ import asyncio
 import signal
 import sys
 import os
+import configparser
 import ipc.coordinatorserver
 import common.devices
 
@@ -16,11 +17,10 @@ def my_interrupt_handler():
 
 
 class Coordinator:
-    def __init__(self):
-        # TODO: implement config parser
-        socketpath = '/tmp/coordinator.socket'
+    def __init__(self, config):
+        self.config = config
         self.coordinatorserver = ipc.coordinatorserver.CoordinatorServer(
-            socketpath, self)
+            config['SocketPath'], self)
 
     def start(self):
         self.coordinatorserver.start()
@@ -39,7 +39,10 @@ if __name__ == "__main__":
     loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
     loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
 
-    coordinator = Coordinator()
+    config = configparser.ConfigParser()
+    config.read('common/config.ini')
+
+    coordinator = Coordinator(config['coordinator')
     coordinator.start()
 
     try:

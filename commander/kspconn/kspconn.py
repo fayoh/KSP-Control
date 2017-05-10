@@ -4,16 +4,11 @@ import common.protocol as protocol
 
 class KSPConnection:
     # TODO: Implement config parser
-    def __init__(self,
-                 commander,
-                 name="",
-                 address='127.0.0.1',
-                 rpc_port=50000,
-                 stream_port=50001):
-        self.name = name
-        self.address = address
-        self.rpc_port = rpc_port
-        self.stream_port = stream_port
+    def __init__(self,  config, commander):
+        self.name = config.get('Name', "command center")
+        self.address = config.get('KSPIp', '127.0.0.1')
+        self.rpc_port = int(config.get('RpcPort', 50000))
+        self.stream_port = int(config.get('StreamPort', 50001))
         self.commander = commander
         self.conn = None
 

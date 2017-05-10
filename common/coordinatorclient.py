@@ -4,7 +4,7 @@ import pickle
 import sys
 import os
 import common.protocol as protocol
-
+from common.protocol import Identity
 
 class CoordinatorClient:
     class CoordinatorClientProtocol(asyncio.Protocol):
@@ -46,9 +46,9 @@ class CoordinatorClient:
         self.socketpath = socketpath
         self.service = service
         if service.type == 'commander':
-            self.identity = protocol.Identity.COMMANDER
+            self.identity = Identity.COMMANDER
         if service.type == 'blinkenlights':
-            self.identity = protocol.Identity.BLINKENLIGHTS
+            self.identity = Identity.BLINKENLIGHTS
         self.protocol = None
 
     @asyncio.coroutine
