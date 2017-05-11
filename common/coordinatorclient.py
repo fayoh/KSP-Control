@@ -13,17 +13,22 @@ class CoordinatorClient:
             self.coordinatorclient = coordinatorclient
             self.coordinatorclient.protocol = self
             self.logger = logging.getLogger(__name__)
+            self.transport = None
 
         def connection_made(self, transport):
             self.transport = transport
             # TODO: shall we be proper and implement a confirmation fom
             # the coordinator?
-            data = pickle.dumps(protocol.create_message(
+            identity = protocol.create_message(
                 protocol.MessageType.IDENTIFY,
-                self.coordinatorclient.identity))
-            self.transport.write(data)
+                self.coordinatorclient.identity)
+            self.send_data(identity)
             self.coordinatorclient.service.connectionevent.set()
             self.logger.info("Connected to coordinator")
+            self.coordinatorclient.service.handle_connect()
+
+        def get_name(self):
+            return self.__class__.__name__
 
         def data_received(self, data):
             try:
@@ -37,19 +42,27 @@ class CoordinatorClient:
                 self.coordinatorclient.handle_data_from_coordinator(message)
 
         def send_data(self, message):
+            if self.transport == None:
+                raise protocol.NoConnectionError
+            protocol.assert_correct_message(message)
             data = pickle.dumps(message)
             self.transport.write(data)
+            print(message)
 
         def connection_lost(self, exc):
             self.logger.warning('The server closed the connection')
+            self.coordinatorclient.protocol = None
+            self.coordinatorclient.service.handle_disconnect()
             asyncio.async(self.coordinatorclient.connect())
 
     def __init__(self, socketpath, service):
         self.socketpath = socketpath
         self.service = service
-        if service.type == 'commander':
+        # TODO: Make a mapping from name to identity
+        #   ...or make the service return an identity
+        if service.get_name() == 'Commander':
             self.identity = Identity.COMMANDER
-        if service.type == 'blinkenlights':
+        if service.get_name() == 'Blinkenlights':
             self.identity = Identity.BLINKENLIGHTS
         self.protocol = None
         self.logger = logging.getLogger(__name__)

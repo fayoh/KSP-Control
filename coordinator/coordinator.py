@@ -6,6 +6,7 @@ import sys
 import os
 import configparser
 import logging
+import common.protocol as protocol
 import ipc.coordinatorserver
 import common.devices
 
@@ -26,6 +27,9 @@ class Coordinator:
         self.coordinatorserver.start()
 
     def stop(self):
+        self.coordinatorserver.broadcast(
+            protocol.create_message(protocol.MessageType.STATUS_MSG,
+                                    protocol.Status.SHUTDOWN))
         self.coordinatorserver.stop()
 
     def handle_data_from_blinkenlights(self, message):

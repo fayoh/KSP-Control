@@ -9,6 +9,7 @@ import logging
 import blink.blinkgenerator
 import blinkenio.controller
 import common.devices
+import common.protocol as protocol
 from common.coordinatorclient import CoordinatorClient
 
 class Blinkenlights:
@@ -22,13 +23,23 @@ class Blinkenlights:
         self.blinkgenerator = blink.blinkgenerator.BlinkGenerator(
             float(config.get('BlinkHz', 2)))
         self.iocontroller = blinkenio.controller.Controller()
+        self.logger = logging.getLogger(self.get_name())
+
+    def get_name(self):
+        return self.__class__.__name__
 
     def start(self):
+        self.logger.info("Starting")
         self.coordinatorclient.start()
         self.blinkgenerator.start()
         self.iocontroller.start()
 
     def stop(self):
+        self.logger.info("Shutting down")
+        if self.coordinatorclient.protocol is not None:
+            self.send_data_to_coordinator(
+                protocol.create_message(protocol.MessageType.STATUS_MSG,
+                                        protocol.Status.SHUTDOWN))
         self.coordinatorclient.stop()
         self.blinkgenerator.stop()
         self.iocontroller.stop()
@@ -37,6 +48,22 @@ class Blinkenlights:
         pass
 
     def send_data_to_coordinator(self, message):
+        self.coordinatorclient.send_data_to_coordinator(message)
+
+    def handle_connect(self):
+        self.send_status()
+
+    def send_status(self):
+        if self.blinkgenerator.ok and self.iocontroller.ok:
+            self.send_data_to_coordinator(
+                protocol.create_message(protocol.MessageType.STATUS_MSG,
+                                        protocol.Status.OK))
+        else:
+            self.send_data_to_coordinator(
+                protocol.create_message(protocol.MessageType.STATUS_MSG,
+                                        protocol.Status.DEGRADED))
+
+    def handle_disconnect(self):
         pass
 
 def my_interrupt_handler():
@@ -50,9 +77,8 @@ if __name__ == "__main__":
     loop.add_signal_handler(signal.SIGINT, my_interrupt_handler)
     loop.add_signal_handler(signal.SIGHUP, my_interrupt_handler)
 
+    # TODO: Get level from args
     logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
-    logger.info('Blinkenlights starting')
 
     config = configparser.ConfigParser()
     config.read('common/config.ini')
@@ -63,8 +89,7 @@ if __name__ == "__main__":
     try:
         loop.run_forever()
     except asyncio.CancelledError:
-        logger.info('Tasks has been canceled')
+        pass
     finally:
-        logger.info('Shutting down')
         blinkenlights.stop()
         loop.close()

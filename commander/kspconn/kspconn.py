@@ -5,6 +5,7 @@ import common.protocol as protocol
 
 class KSPConnection:
     # TODO: Implement config parser
+    # TODO: Detect disconnect from krpc-server
     def __init__(self,  config, commander):
         self.name = config.get('Name', "command center")
         self.address = config.get('KSPIp', '127.0.0.1')
@@ -13,6 +14,7 @@ class KSPConnection:
         self.commander = commander
         self.conn = None
         self.logger = logging.getLogger(__name__)
+        self.ok = False
 
     def start(self):
         asyncio.async(self.do_start())
@@ -32,9 +34,15 @@ class KSPConnection:
                 yield from asyncio.sleep(5)
             else:
                 self.logger.info("Connected to KSP.")
-                self.commander.send_data_to_coordinator(
-                    (protocol.MessageType.STATUS_MSG, protocol.Status.OK))
-                break
+                self.ok = True
+                try:
+                    self.commander.send_status()
+                except protocol.NoConnectionError:
+                    # If we connect to ksp before the coordinator
+                    # status will be sent on connection event
+                    pass
+                finally:
+                    break
 
     def handle_data_from_coordinator(self, message):
         pass
@@ -42,3 +50,6 @@ class KSPConnection:
     def stop(self):
         if self.conn != None:
             self.conn.close()
+
+    def handle_disconnect(self):
+        pass

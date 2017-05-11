@@ -6,12 +6,12 @@ import threading
 class Controller:
 
     def __init__(self):
-        pass
+        self.ok = False
 
     def start(self):
-        pass
+        self.ok = True
 
     def stop(self):
-        pass
+        self.ok = False
 
 

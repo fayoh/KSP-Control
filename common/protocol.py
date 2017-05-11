@@ -127,6 +127,12 @@ class ValidationError(Exception):
     pass
 
 
+class UnknownClientError(Exception):
+    pass
+
+class NoConnectionError(Exception):
+    pass
+
 def get_message_data(msg):
     return msg[1]
 
@@ -143,7 +149,7 @@ def is_correct_message(msg):
         return False
 
 def assert_correct_message(msg):
-    if isinstance(msg, tuple):
+    if isinstance(msg, tuple) and len(msg) == 2:
         if isinstance(msg[0],MessageType):
             return True
     raise ValidationError
