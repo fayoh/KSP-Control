@@ -81,5 +81,5 @@ class CoordinatorClient:
         self.service.handle_data_from_coordinator(message)
 
     def send_data_to_coordinator(self, message):
-        # TODO: error checking here as well?
+        protocol.assert_correct_message(message)
         self.protocol.send_data(message)

@@ -123,6 +123,10 @@ ACTION_DICT = {v: enumeration_enumerator.next()
 ACTION_REVERSE_DICT = {v:k  for k,v in ACTION_DICT.items()}
 
 
+class ValidationError(Exception):
+    pass
+
+
 def get_message_data(msg):
     return msg[1]
 
@@ -137,3 +141,9 @@ def is_correct_message(msg):
         return isinstance(msg[0],MessageType)
     else:
         return False
+
+def assert_correct_message(msg):
+    if isinstance(msg, tuple):
+        if isinstance(msg[0],MessageType):
+            return True
+    raise ValidationError

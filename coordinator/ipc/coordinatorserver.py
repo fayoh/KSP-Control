@@ -22,8 +22,7 @@ class CoordinatorServer:
         def data_received(self, data):
             try:
                 message = pickle.loads(data)
-                if not protocol.is_correct_message(message):
-                    raise Exception()
+                protocol.assert_correct_message(message)
             except pickle.PickleError as e:
                 self.logger.warn('Ignoring malformed data', data, e)
             else:
