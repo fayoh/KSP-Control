@@ -1,5 +1,5 @@
 import asyncio
-
+from contextlib import suppress
 
 class BlinkGenerator:
 
@@ -7,17 +7,17 @@ class BlinkGenerator:
         self.blinkfrequency = blinkfrequency
         self.ok = False
 
+    @asyncio.coroutine
     def start(self):
-        self.task = asyncio.async(self.blink())
+        asyncio.async(self.blink())
         self.ok = True
 
     def stop(self):
-        self.task.cancel()
         self.ok = False
 
     @asyncio.coroutine
     def blink(self):
         sleep = 1/self.blinkfrequency
         while True:
-            yield from asyncio.sleep(sleep)
-            print('Blink')
+                yield from asyncio.sleep(sleep)
+                print('Blink')

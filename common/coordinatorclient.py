@@ -15,6 +15,10 @@ class CoordinatorClient:
             self.logger = logging.getLogger(__name__)
             self.transport = None
 
+        def stop(self):
+            if self.transport is not None:
+                self.transport.close()
+
         def connection_made(self, transport):
             self.transport = transport
             # TODO: shall we be proper and implement a confirmation fom
@@ -25,7 +29,7 @@ class CoordinatorClient:
             self.send_data(identity)
             self.coordinatorclient.service.connectionevent.set()
             self.logger.info("Connected to coordinator")
-            self.coordinatorclient.service.handle_connect()
+            self.coordinatorclient.service.abstract_handle_connect()
 
         def get_name(self):
             return self.__class__.__name__
@@ -52,6 +56,7 @@ class CoordinatorClient:
         def connection_lost(self, exc):
             self.logger.warning('Coordinator closed the connection')
             self.coordinatorclient.protocol = None
+            self.transport.close()
             self.coordinatorclient.service.handle_disconnect()
             asyncio.async(self.coordinatorclient.connect())
 
@@ -85,10 +90,11 @@ class CoordinatorClient:
 
     def start(self):
         self.logger.info('IPC client towards coordinator starting')
-        asyncio.async(self.connect())
+        yield from asyncio.async(self.connect())
 
     def stop(self):
-        pass
+        if self.protocol is not None:
+            self.protocol.stop()
 
     def handle_data_from_coordinator(self, message):
         self.service.handle_data_from_coordinator(message)
