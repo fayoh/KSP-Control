@@ -17,8 +17,8 @@ class AbstractService:
         self.loop = asyncio.get_event_loop()
         self.loop.add_signal_handler(signal.SIGINT, self.my_interrupt_handler)
         self.loop.add_signal_handler(signal.SIGHUP, self.my_interrupt_handler)
-        self.abstract_start()
         self.tasks = []
+        self.abstract_start()
 
     def abstract_start(self):
         self.logger.info("Starting")
@@ -27,7 +27,7 @@ class AbstractService:
         try:
             self.loop.run_forever()
         except asyncio.CancelledError:
-            print("cancelled")
+            pass
         finally:
             self.abstract_stop()
             for task in asyncio.Task.all_tasks():
@@ -58,12 +58,7 @@ class AbstractService:
         raise NotImplementedError()
 
     def send_data_to_coordinator(self, message):
-        # The exception should probably be propagated upwards
-        # for better handling
-        try:
-            self.coordinatorclient.send_data_to_coordinator(message)
-        except protocol.NoConnectionError:
-            self.logger.debug("Failed to send data, no connection")
+        self.coordinatorclient.send_data_to_coordinator(message)
 
     def abstract_handle_connect(self):
         self.send_status()

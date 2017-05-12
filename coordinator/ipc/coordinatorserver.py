@@ -27,7 +27,6 @@ class CoordinatorServer:
                 self.logger.warn('Ignoring malformed data', data, e)
             else:
                 msgtype = protocol.get_message_type(message)
-
                 if self.client == None:
                     self.identify(message)
                 else:
@@ -50,7 +49,8 @@ class CoordinatorServer:
                     self.client = msgdata
                     self.coordinator_server.add_client(msgdata, self)
             else:
-                logger.debug("Data received before identification", message)
+                self.logger.debug("Data received before identification",
+                                  message)
 
     def __init__(self, socketpath, coordinator):
         self.socketpath = socketpath

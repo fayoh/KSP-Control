@@ -16,14 +16,11 @@ class KSPConnection:
         self.logger = logging.getLogger(self.get_name())
         self.ok = False
         self.streams = {}
-        self.statemethods = {}
+        self.state = {}
         self.current_scene = None
 
-    def start(self):
-        asyncio.async(self.do_start())
-
     @asyncio.coroutine
-    def do_start(self):
+    def start(self):
         while True:
             try:
                 # TODO: this does not time-out but just hangs the loop
@@ -51,27 +48,7 @@ class KSPConnection:
         self.initialise()
 
     def initialise(self):
-        scene = self.conn.krpc.current_game_scene
-        if scene == self.conn.krpc.GameScene.flight:
-            self.enter_new_state(scene.name, protocol.GameScene.FLIGHT)
-        else:
-            self.enter_new_state(scene.name, protocol.GameScene.SPACE_CENTER)
-        self.state[protocol.KrpcInfo.GAME_SCENE] = scene
-
-    def enter_new_state(self, name, new_scene):
-        self.exit_state()
-        self.state[protocol.KrpcInfo.GAME_SCENE] = new_scene
-        self.current_scene = asyncio.async(self.statemethods[new_scene]())
-        message = protocol.create_message(
-            protocol.MessageType.KRPC_INFO_MSG,
-            (protocol.KrpcInfo.GAME_SCENE, self.krpc_to_internal[new_scene]))
-        try:
-            self.commander.send_data_to_coordinator(message)
-        except protocol.NoConnectionError:
-            asyncio.async(self.send_on_connection(message))
-
-    def get_scene(self):
-        return self.krpc_to_internal[self.state[protocol.KrpcInfo.GAME_SCENE]]
+        self.enter_new_scene(self.conn.krpc.current_game_scene)
 
     @asyncio.coroutine
     def send_on_connection(self, message):
@@ -91,16 +68,45 @@ class KSPConnection:
     def get_name(self):
         return self.__class__.__name__
 
+    def get_scene(self):
+        if self.state[protocol.KrpcInfo.GAME_SCENE] == self.conn.krpc.GameScene.flight:
+            return protocol.GameScene.FLIGHT
+        else:
+           return protocol.GameScene.SPACE_CENTER
+
     # State handlers
+    def enter_new_scene(self, new_scene):
+       self.exit_current_scene()
+       self.state[protocol.KrpcInfo.GAME_SCENE] = new_scene
+       datatype = protocol.KrpcInfo.GAME_SCENE
+       if new_scene == self.conn.krpc.GameScene.flight:
+           self.current_scene = asyncio.async(self.flight())
+           msgdata = (datatype, protocol.GameScene.FLIGHT)
+       else:
+           self.current_scene = asyncio.async(self.space_center())
+           msgdata = (datatype, protocol.GameScene.SPACE_CENTER)
+
+       message = protocol.create_message(
+           protocol.MessageType.KRPC_INFO_MSG,msgdata)
+       try:
+           self.commander.send_data_to_coordinator(message)
+       except protocol.NoConnectionError:
+           asyncio.async(self.send_on_connection(message))
+
+
+
+    def exit_current_scene(self):
+        pass
+
     @asyncio.coroutine
     def space_center(self):
         self.logger.debug("Entering space center")
         while True:
-            yield from asyncio.sleep(0.1) # TODO in config
+            yield from asyncio.sleep(0.11) # TODO in config
             scene = self.conn.krpc.current_game_scene
             if self.state[protocol.KrpcInfo.GAME_SCENE] != scene:
                 break
-        self.enter_new_state(scene)
+        self.enter_new_scene(scene)
 
     @asyncio.coroutine
     def flight(self):
@@ -110,7 +116,7 @@ class KSPConnection:
             scene = self.conn.krpc.current_game_scene
             if self.state[protocol.KrpcInfo.GAME_SCENE] != scene:
                 break
-        self.enter_new_state(scene)
+        self.enter_new_scene(scene)
 
-    def exit_state(self):
+    def exit_scene(self):
         self.logger.info("Exciting state %s", )

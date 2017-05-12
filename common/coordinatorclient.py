@@ -14,12 +14,15 @@ class CoordinatorClient:
             self.coordinatorclient.protocol = self
             self.logger = logging.getLogger(__name__)
             self.transport = None
+            self.running = False
 
         def stop(self):
+            self.running = False
             if self.transport is not None:
                 self.transport.close()
 
         def connection_made(self, transport):
+            self.running = True
             self.transport = transport
             # TODO: shall we be proper and implement a confirmation fom
             # the coordinator?
@@ -51,14 +54,14 @@ class CoordinatorClient:
             protocol.assert_correct_message(message)
             data = pickle.dumps(message)
             self.transport.write(data)
-            print(message)
 
         def connection_lost(self, exc):
-            self.logger.warning('Coordinator closed the connection')
-            self.coordinatorclient.protocol = None
-            self.transport.close()
-            self.coordinatorclient.service.handle_disconnect()
-            asyncio.async(self.coordinatorclient.connect())
+            if self.running:
+                self.logger.warning('Coordinator closed the connection')
+                self.coordinatorclient.protocol = None
+                self.transport.close()
+                self.coordinatorclient.service.handle_disconnect()
+                asyncio.async(self.coordinatorclient.connect())
 
     def __init__(self, socketpath, service):
         self.socketpath = socketpath
@@ -75,7 +78,6 @@ class CoordinatorClient:
     @asyncio.coroutine
     def connect(self):
         loop = asyncio.get_event_loop()
-        self.logger.info('Connecting to coordinator')
         while True:
             try:
                 yield from loop.create_unix_connection(
@@ -86,11 +88,11 @@ class CoordinatorClient:
                       'retrying in 5 seconds')
                 yield from asyncio.sleep(5)
             else:
-                break
+                return True
 
     def start(self):
         self.logger.info('IPC client towards coordinator starting')
-        yield from asyncio.async(self.connect())
+        asyncio.async(self.connect())
 
     def stop(self):
         if self.protocol is not None:

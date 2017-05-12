@@ -14,25 +14,21 @@ class Commander(AbstractService):
         super(Commander, self).__init__(config)
 
     def start(self):
-        self.kspconnection.start()
+        asyncio.async(self.kspconnection.start())
 
     def stop(self):
-        self.coordinatorclient.stop()
         self.kspconnection.stop()
 
     def handle_data_from_coordinator(self, message):
         self.kspconnection.handle_data_from_coordinator(message)
 
-
     def handle_connect(self):
-        pass
-        # TODO: why does this not reach the coordinator on reconnect?
-        #    Make minimum viable example and test
-        # message = protocol.create_message(
-        #     protocol.MessageType.KRPC_INFO_MSG,
-        #     (protocol.KrpcInfo.GAME_SCENE,
-        #      self.kspconnection.get_scene()))
-        # self.send_data_to_coordinator(message)
+        if protocol.KrpcInfo.GAME_SCENE in self.kspconnection.state:
+            message = protocol.create_message(
+                protocol.MessageType.KRPC_INFO_MSG,
+                (protocol.KrpcInfo.GAME_SCENE,
+                 self.kspconnection.get_scene()))
+            self.send_data_to_coordinator(message)
 
     def send_status(self):
         self.logger.debug("send status")
