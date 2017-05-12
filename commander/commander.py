@@ -23,7 +23,7 @@ class Commander:
         self.coordinatorclient = CoordinatorClient(
             config['SocketPath'], self)
         self.kspconnection = KSPConnection(config, commander=self)
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(self.get_name())
 
     def start(self):
         self.logger.info("Starting")
@@ -32,10 +32,14 @@ class Commander:
 
     def stop(self):
         self.logger.info("Shutting down")
-        if self.coordinatorclient.protocol is not None:
+
+        try:
             self.send_data_to_coordinator(
                 protocol.create_message(protocol.MessageType.STATUS_MSG,
                                         protocol.Status.SHUTDOWN))
+        except protocol.NoConnectionError:
+            pass
+
         self.coordinatorclient.stop()
         self.kspconnection.stop()
 
@@ -43,7 +47,10 @@ class Commander:
         self.kspconnection.handle_data_from_coordinator(message)
 
     def send_data_to_coordinator(self, message):
-        self.coordinatorclient.send_data_to_coordinator(message)
+        try:
+            self.coordinatorclient.send_data_to_coordinator(message)
+        except protocol.NoConnectionError:
+            self.logger.debug("Failed to send data, no connection")
 
     def handle_connect(self):
         self.send_status()

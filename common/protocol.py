@@ -74,6 +74,16 @@ KRPCINFO_DICT = {v: enumeration_enumerator.next()
                    for v in KrpcInfo.__members__.values()}
 KRPCINFO_REVERSE_DICT = {v:k  for k,v in KRPCINFO_DICT.items()}
 
+class GameScene(AutoNumber):
+    SPACE_CENTER = ()
+    FLIGHT = ()
+    VAB = ()
+    SPH = ()
+    TRACKING_STATION = ()
+    RND = ()
+    ADMINISTRAION = ()
+    MISSION_CONTROL = ()
+    ASTRONAUT_COMPLEX = ()
 
 class DeploymentStatus(AutoNumber):
     RETRACTED = ()

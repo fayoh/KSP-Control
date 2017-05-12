@@ -36,10 +36,9 @@ class Blinkenlights:
 
     def stop(self):
         self.logger.info("Shutting down")
-        if self.coordinatorclient.protocol is not None:
-            self.send_data_to_coordinator(
-                protocol.create_message(protocol.MessageType.STATUS_MSG,
-                                        protocol.Status.SHUTDOWN))
+        self.send_data_to_coordinator(
+            protocol.create_message(protocol.MessageType.STATUS_MSG,
+                                    protocol.Status.SHUTDOWN))
         self.coordinatorclient.stop()
         self.blinkgenerator.stop()
         self.iocontroller.stop()
@@ -48,7 +47,11 @@ class Blinkenlights:
         pass
 
     def send_data_to_coordinator(self, message):
-        self.coordinatorclient.send_data_to_coordinator(message)
+        # Maybe we should let the exception propagate and get handled higher up?
+        try:
+            self.coordinatorclient.send_data_to_coordinator(message)
+        except protocol.NoConnectionError:
+            self.logger.debug("Failed to send data, no connection")
 
     def handle_connect(self):
         self.send_status()

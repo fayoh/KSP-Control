@@ -50,7 +50,7 @@ class CoordinatorClient:
             print(message)
 
         def connection_lost(self, exc):
-            self.logger.warning('The server closed the connection')
+            self.logger.warning('Coordinator closed the connection')
             self.coordinatorclient.protocol = None
             self.coordinatorclient.service.handle_disconnect()
             asyncio.async(self.coordinatorclient.connect())
@@ -95,4 +95,6 @@ class CoordinatorClient:
 
     def send_data_to_coordinator(self, message):
         protocol.assert_correct_message(message)
+        if self.protocol == None:
+            raise protocol.NoConnectionError
         self.protocol.send_data(message)
