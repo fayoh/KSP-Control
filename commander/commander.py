@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import asyncio
 import configparser
 import logging
@@ -14,7 +13,7 @@ class Commander(AbstractService):
         super(Commander, self).__init__(config)
 
     def start(self):
-        asyncio.async(self.kspconnection.start())
+        asyncio.ensure_future(self.kspconnection.start())
 
     def stop(self):
         self.kspconnection.stop()

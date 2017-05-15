@@ -19,8 +19,8 @@ class KSPConnection:
         self.state = {}
         self.current_scene = None
 
-    @asyncio.coroutine
-    def start(self):
+
+    async def start(self):
         while True:
             try:
                 # TODO: this does not time-out but just hangs the loop
@@ -33,7 +33,7 @@ class KSPConnection:
             except:
                 self.logger.info(
                     "Failed to connect to KSP, trying again in 5 seconds.")
-                yield from asyncio.sleep(5)
+                await asyncio.sleep(5)
             else:
                 self.logger.info("Connected to KSP.")
                 self.ok = True
@@ -50,9 +50,8 @@ class KSPConnection:
     def initialise(self):
         self.enter_new_scene(self.conn.krpc.current_game_scene)
 
-    @asyncio.coroutine
-    def send_on_connection(self, message):
-        yield from self.commander.connectionevent.wait()
+    async def send_on_connection(self, message):
+        await self.commander.connectionevent.wait()
         self.commander.send_data_to_coordinator(message)
 
     def handle_data_from_coordinator(self, message):
@@ -80,10 +79,10 @@ class KSPConnection:
        self.state[protocol.KrpcInfo.GAME_SCENE] = new_scene
        datatype = protocol.KrpcInfo.GAME_SCENE
        if new_scene == self.conn.krpc.GameScene.flight:
-           self.current_scene = asyncio.async(self.flight())
+           self.current_scene = asyncio.ensure_future(self.flight())
            msgdata = (datatype, protocol.GameScene.FLIGHT)
        else:
-           self.current_scene = asyncio.async(self.space_center())
+           self.current_scene = asyncio.ensure_future(self.space_center())
            msgdata = (datatype, protocol.GameScene.SPACE_CENTER)
 
        message = protocol.create_message(
@@ -91,28 +90,26 @@ class KSPConnection:
        try:
            self.commander.send_data_to_coordinator(message)
        except protocol.NoConnectionError:
-           asyncio.async(self.send_on_connection(message))
+           asyncio.ensure_future(self.send_on_connection(message))
 
 
 
     def exit_current_scene(self):
         pass
 
-    @asyncio.coroutine
-    def space_center(self):
+    async def space_center(self):
         self.logger.debug("Entering space center")
         while True:
-            yield from asyncio.sleep(0.11) # TODO in config
+            await asyncio.sleep(0.11) # TODO in config
             scene = self.conn.krpc.current_game_scene
             if self.state[protocol.KrpcInfo.GAME_SCENE] != scene:
                 break
         self.enter_new_scene(scene)
 
-    @asyncio.coroutine
-    def flight(self):
+    async def flight(self):
         self.logger.debug("Entering flight")
         while True:
-            yield from asyncio.sleep(0.1) # TODO in config
+            await asyncio.sleep(0.1) # TODO in config
             scene = self.conn.krpc.current_game_scene
             if self.state[protocol.KrpcInfo.GAME_SCENE] != scene:
                 break

@@ -61,7 +61,7 @@ class CoordinatorClient:
                 self.coordinatorclient.protocol = None
                 self.transport.close()
                 self.coordinatorclient.service.handle_disconnect()
-                asyncio.async(self.coordinatorclient.connect())
+                asyncio.ensure_future(self.coordinatorclient.connect())
 
     def __init__(self, socketpath, service):
         self.socketpath = socketpath
@@ -75,24 +75,24 @@ class CoordinatorClient:
         self.protocol = None
         self.logger = logging.getLogger(__name__)
 
-    @asyncio.coroutine
-    def connect(self):
+
+    async def connect(self):
         loop = asyncio.get_event_loop()
         while True:
             try:
-                yield from loop.create_unix_connection(
+                await loop.create_unix_connection(
                     lambda: self.CoordinatorClientProtocol(self),
                     self.socketpath)
             except OSError as e:
                 self.logger.info('Connection to coordinator failed, '
                       'retrying in 5 seconds')
-                yield from asyncio.sleep(5)
+                await asyncio.sleep(5)
             else:
                 return True
 
     def start(self):
         self.logger.info('IPC client towards coordinator starting')
-        asyncio.async(self.connect())
+        asyncio.ensure_future(self.connect())
 
     def stop(self):
         if self.protocol is not None:

@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import asyncio
 import configparser
 import logging
@@ -17,7 +15,7 @@ class Blinkenlights(AbstractService):
         super(Blinkenlights, self).__init__(config)
 
     def start(self):
-        asyncio.async(self.blinkgenerator.start())
+        asyncio.ensure_future(self.blinkgenerator.start())
         self.iocontroller.start()
 
     def stop(self):
